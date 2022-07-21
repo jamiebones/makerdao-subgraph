@@ -1,15 +1,24 @@
-type TokenHeld @entity {
-   id: ID!
-   currentValue: BigInt!
-   timeStamp: BigInt!
-   amount: BigInt!
-   sourceAccount: User!
-   receiverAccount: User!
+
+
+type TokenTransfered @entity {
+  id: ID!
+  to: User!
+  timeStamp: BigInt!
+  senderCurrentAmount: BigInt!
+  amount: BigInt!
+}
+
+type TokenReceived @entity {
+  id: ID!
+  from: User!
+  timeStamp: BigInt!
+  receiverCurrentAmount: BigInt!
+  amount: BigInt!
 }
 
 
 type User @entity {
   id: ID!
-  transfers: [TokenHeld!]! @derivedFrom(field: "receiverAccount")
-  received:  [TokenHeld!]! @derivedFrom(field: "sourceAccount")
+  tokensTransfered: [TokenTransfered!]! @derivedFrom(field: "to")
+  tokensReceived:  [TokenReceived!]! @derivedFrom(field: "from")
 }

@@ -2,7 +2,7 @@ import {
   DaiToken as DaiTokenContract,
   Transfer as TransferEvent,
 } from "../generated/DaiToken/DaiToken";
-import { User, TokenHeld } from "../generated/schema";
+import { User, TokenTransfered, TokenReceived } from "../generated/schema";
 
 export function handleTransfer(event: TransferEvent): void {
   let receiverUser = User.load(event.params.dst.toHex());
@@ -26,25 +26,22 @@ export function handleTransfer(event: TransferEvent): void {
 
   let timeStamp = event.block.timestamp;
 
-  let sourceTokenHeld = new TokenHeld(
-    event.transaction.from.toHex().concat(event.params.src.toHex())
+  let userReceiving = new TokenReceived(
+    event.transaction.from.toHex().concat(event.params.dst.toHex())
   );
+  userReceiving.amount = event.params.wad;
+  userReceiving.from = event.params.src.toHex();
+  userReceiving.timeStamp = timeStamp;
+  userReceiving.receiverCurrentAmount = receiverBalance;
+  userReceiving.save();
 
-  sourceTokenHeld.amount = event.params.wad;
-  sourceTokenHeld.currentValue = sourceBalance;
-  sourceTokenHeld.receiverAccount = event.params.dst.toHex();
-  sourceTokenHeld.sourceAccount = event.params.src.toHex();
-  sourceTokenHeld.timeStamp = timeStamp;
-  sourceTokenHeld.save();
-
-  let receiverTokenHeld = new TokenHeld(
+  let userSending = new TokenTransfered(
     event.transaction.from.toHex().concat(event.params.dst.toHex())
   );
 
-  receiverTokenHeld.amount = event.params.wad;
-  receiverTokenHeld.currentValue = receiverBalance;
-  receiverTokenHeld.receiverAccount = event.params.dst.toHex();
-  receiverTokenHeld.sourceAccount = event.params.src.toHex();
-  receiverTokenHeld.timeStamp = timeStamp;
-  receiverTokenHeld.save();
+  userSending.amount = event.params.wad;
+  userSending.to = event.params.dst.toHex();
+  userSending.timeStamp = timeStamp;
+  userSending.senderCurrentAmount = sourceBalance;
+  userSending.save();
 }
