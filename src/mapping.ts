@@ -36,7 +36,7 @@ export function handleTransfer(event: TransferEvent): void {
   userReceiving.save();
 
   let userSending = new TokenTransfered(
-    event.transaction.from.toHex().concat(event.params.dst.toHex())
+    event.transaction.from.toHex().concat(event.params.src.toHex())
   );
 
   userSending.amount = event.params.wad;
@@ -45,3 +45,4 @@ export function handleTransfer(event: TransferEvent): void {
   userSending.senderCurrentAmount = sourceBalance;
   userSending.save();
 }
+
