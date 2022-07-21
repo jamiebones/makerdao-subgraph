@@ -1,6 +1,15 @@
-type ExampleEntity @entity {
+type TokenHeld @entity {
+   id: ID!
+   currentValue: BigInt!
+   timeStamp: BigInt!
+   amount: BigInt!
+   sourceAccount: User!
+   receiverAccount: User!
+}
+
+
+type User @entity {
   id: ID!
-  count: BigInt!
-  src: Bytes! # address
-  guy: Bytes! # address
+  transfers: [TokenHeld!]! @derivedFrom(field: "receiverAccount")
+  received:  [TokenHeld!]! @derivedFrom(field: "sourceAccount")
 }
