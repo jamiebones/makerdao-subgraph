@@ -15,8 +15,8 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - User
-        - TokenReceived
-        - TokenTransfered
+        - UserCounter
+        - TransferCounter
       abis:
         - name: DaiToken
           file: ./abis/DaiToken.json

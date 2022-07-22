@@ -1,24 +1,17 @@
-
-
-type TokenTransfered @entity {
-  id: ID!
-  to: User!
-  timeStamp: BigInt!
-  senderCurrentAmount: BigInt!
-  amount: BigInt!
-}
-
-type TokenReceived @entity {
-  id: ID!
-  from: User!
-  timeStamp: BigInt!
-  receiverCurrentAmount: BigInt!
-  amount: BigInt!
-}
-
-
 type User @entity {
   id: ID!
-  tokensTransfered: [TokenTransfered!]! @derivedFrom(field: "to")
-  tokensReceived:  [TokenReceived!]! @derivedFrom(field: "from")
+  address: String!
+  balance: BigInt!
+  transactionCount: Int!
+}
+
+type UserCounter @entity {
+  id: ID!
+  count: Int!
+}
+
+type TransferCounter @entity {
+  id: ID!
+  count: Int!
+  totalTransferred: BigInt!
 }

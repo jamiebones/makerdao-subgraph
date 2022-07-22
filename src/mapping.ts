@@ -1,48 +1,58 @@
-import {
-  DaiToken as DaiTokenContract,
-  Transfer as TransferEvent,
-} from "../generated/DaiToken/DaiToken";
-import { User, TokenTransfered, TokenReceived } from "../generated/schema";
+import { BigInt } from "@graphprotocol/graph-ts";
+import { Transfer as TransferEvent } from "../generated/DaiToken/DaiToken";
+import { User, UserCounter, TransferCounter } from "../generated/schema";
 
 export function handleTransfer(event: TransferEvent): void {
-  let receiverUser = User.load(event.params.dst.toHex());
-  let sourceUser = User.load(event.params.src.toHex());
+  let day = event.block.timestamp.div(BigInt.fromI32(60 * 60 * 24));
 
-  //load the contract and find the balance as at that point int time
-  let Contract = DaiTokenContract.bind(event.address);
-  let receiverBalance = Contract.balanceOf(event.params.dst);
-  let sourceBalance = Contract.balanceOf(event.params.src);
-
-  if (!receiverUser) {
-    //create a new receiver here
-    receiverUser = new User(event.params.dst.toHex());
-    receiverUser.save();
+  let userFrom = User.load(event.params.src.toHex());
+  if (userFrom == null) {
+    userFrom = newUser(event.params.src.toHex(), event.params.src.toHex());
   }
+  userFrom.balance = userFrom.balance.minus(event.params.wad);
+  userFrom.transactionCount = userFrom.transactionCount + 1;
+  userFrom.save();
 
-  if (!sourceUser) {
-    sourceUser = new User(event.params.src.toHex());
-    sourceUser.save();
+  let userTo = User.load(event.params.dst.toHex());
+  if (userTo == null) {
+    userTo = newUser(event.params.dst.toHex(), event.params.dst.toHex());
+
+    // UserCounter
+    let userCounter = UserCounter.load("singleton");
+    if (userCounter == null) {
+      userCounter = new UserCounter("singleton");
+      userCounter.count = 1;
+    } else {
+      userCounter.count = userCounter.count + 1;
+    }
+    userCounter.save();
+    userCounter.id = day.toString();
+    userCounter.save();
   }
+  userTo.balance = userTo.balance.plus(event.params.wad);
+  userTo.transactionCount = userTo.transactionCount + 1;
+  userTo.save();
 
-  let timeStamp = event.block.timestamp;
-
-  let userReceiving = new TokenReceived(
-    event.transaction.from.toHex().concat(event.params.dst.toHex())
+  // Transfer counter total and historical
+  let transferCounter = TransferCounter.load("singleton");
+  if (transferCounter == null) {
+    transferCounter = new TransferCounter("singleton");
+    transferCounter.count = 0;
+    transferCounter.totalTransferred = BigInt.fromI32(0);
+  }
+  transferCounter.count = transferCounter.count + 1;
+  transferCounter.totalTransferred = transferCounter.totalTransferred.plus(
+    event.params.wad
   );
-  userReceiving.amount = event.params.wad;
-  userReceiving.from = event.params.src.toHex();
-  userReceiving.timeStamp = timeStamp;
-  userReceiving.receiverCurrentAmount = receiverBalance;
-  userReceiving.save();
-
-  let userSending = new TokenTransfered(
-    event.transaction.from.toHex().concat(event.params.src.toHex())
-  );
-
-  userSending.amount = event.params.wad;
-  userSending.to = event.params.dst.toHex();
-  userSending.timeStamp = timeStamp;
-  userSending.senderCurrentAmount = sourceBalance;
-  userSending.save();
+  transferCounter.save();
+  transferCounter.id = day.toString();
+  transferCounter.save();
 }
 
+function newUser(id: string, address: string): User {
+  let user = new User(id);
+  user.address = address;
+  user.balance = BigInt.fromI32(0);
+  user.transactionCount = 0;
+  return user;
+}
