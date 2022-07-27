@@ -3,6 +3,7 @@ import { Transfer as TransferEvent } from "../generated/DaiToken/DaiToken";
 import { User, UserCounter, TransferCounter } from "../generated/schema";
 
 export function handleTransfer(event: TransferEvent): void {
+  
   let day = event.block.timestamp.div(BigInt.fromI32(60 * 60 * 24));
 
   let userFrom = User.load(event.params.src.toHex());
